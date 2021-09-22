@@ -17,10 +17,38 @@ public final class DocumentValidator
     {
         Stack<String> tags = new Stack<String>();
         String nextTag = "";
-        
+        boolean selfEnclosing = false;
+        boolean tag = false;
         while (documentStream.hasNext())
         {
-            
+            var next = documentStream.next();
+            if (next.startsWith("<\\"))
+            {
+                if (!tag)
+                {
+                    tags.push(nextTag);
+                    nextTag = "";
+                }
+                selfEnclosing = true;
+                tag = true;
+                nextTag += next;
+                continue;
+            }
+            else if (next.startsWith("<"))
+            {
+                if (!tag)
+                {
+                    tags.push(nextTag);
+                    nextTag = "";
+                }
+                tag = true;
+                nextTag += next;
+                continue;
+            }
+            else if (next.endsWith(">"))
+            {
+                
+            }
         }
         return true;
     }
