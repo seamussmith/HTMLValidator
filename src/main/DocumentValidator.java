@@ -3,6 +3,7 @@ package main;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
+import java.util.Stack;
 import java.util.regex.Pattern;
 
 public final class DocumentValidator
@@ -16,8 +17,8 @@ public final class DocumentValidator
 
     public static boolean isValidDocument(Scanner documentStream)
     {
-        Queue<String> tokens = new LinkedList<String>();
-        Queue<String> tags = new LinkedList<String>();
+        Stack<String> tokens = new Stack<String>();
+        Stack<String> tags = new Stack<String>();
         String nextTag = "";
         while (documentStream.hasNext())
         {
@@ -36,8 +37,11 @@ public final class DocumentValidator
             }
             else if (VALID_CHARS_REGEX.asPredicate().test(next))
             {
-                if (tokens.peek().equals(TAG_START))
-                    ;
+                tags.add(next);
+            }
+            else
+            {
+                return false;
             }
         }
         return true;
