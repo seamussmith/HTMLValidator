@@ -3,6 +3,8 @@ package main;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import jdk.internal.reflect.ConstantPool.Tag;
+
 public final class DocumentValidator
 {
     static final Pattern START_TAG = Pattern.compile("^<([A-z0-9\"= \n\t]*?)>$");
@@ -12,9 +14,9 @@ public final class DocumentValidator
     
     public static boolean isValidDocument(Scanner documentStream)
     {
-        Stack<String> tags = new Stack<String>();
-        String nextTag = "";
-        String tagName = "";
+        var tags = new Stack<HTMLTag>();
+        var nextTag = "";
+        var tagName = "";
         boolean tagIdentified = false;
         boolean selfEnclosing = false;
         boolean closing = false;
@@ -52,7 +54,7 @@ public final class DocumentValidator
                     {
                         var regexResult = false;
                         regexResult = END_TAG.asPredicate().test(nextTag);
-                        if (!regexResult)
+                        if (!regexResult || tags.peek().name() != tagName)
                             return false;
                     }
                     else
@@ -61,6 +63,7 @@ public final class DocumentValidator
                         regexResult = START_TAG.asPredicate().test(nextTag);
                         if (!regexResult)
                             return false;
+                        tags.add(new HTMLTag(tagName, TagType.BEGIN));
                     }
                     break;
                 default:
