@@ -3,13 +3,11 @@ package main;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import jdk.internal.reflect.ConstantPool.Tag;
-
 public final class DocumentValidator
 {
-    static final Pattern START_TAG = Pattern.compile("^<([A-z0-9\"= \n\t]*?)>$");
-    static final Pattern SELF_ENCLOSE_TAG = Pattern.compile("^<(\\/|\\!)([A-z0-9\"= \\n\\t]*?)>$");
-    static final Pattern END_TAG = Pattern.compile("^<([A-z0-9\"= \n\t]*?)\\/>$");
+    static final Pattern START_TAG = Pattern.compile("^<([A-z0-9\"\'= \\-\n\t]*?)>$");
+    static final Pattern SELF_ENCLOSE_TAG = Pattern.compile("^<\\!?([A-z0-9\"\'= \\-\\n\\t]*?)/?>$");
+    static final Pattern END_TAG = Pattern.compile("^<\\/([A-z0-9 \\-\n\t]*?)>$");
     static final Pattern VALID_CHARS_REGEX = Pattern.compile("[A-z]|\\-|\\!|\\\"|\\'");
     
     public static boolean isValidDocument(Scanner documentStream)
@@ -23,7 +21,7 @@ public final class DocumentValidator
         boolean tag = false;
         while (documentStream.hasNext())
         {
-            var next = documentStream.next().toCharArray();
+            var next = documentStream.nextLine().toCharArray();
             for (var c : next)
             {
                 switch (c)
@@ -35,10 +33,17 @@ public final class DocumentValidator
                     nextTag += c;
                     break;
                 case '/':
-                    if (!tagIdentified)
+                    if (tagIdentified)
                         selfEnclosing = true;
                     else
                         closing = true;
+                    nextTag += c;
+                    break;
+                case '!':
+                    if (!tagIdentified)
+                        selfEnclosing = true;
+                    else
+                        return false;
                     nextTag += c;
                     break;
                 case '>':
@@ -54,7 +59,7 @@ public final class DocumentValidator
                     {
                         var regexResult = false;
                         regexResult = END_TAG.asPredicate().test(nextTag);
-                        if (!regexResult || tags.peek().name() != tagName)
+                        if (!regexResult || !tags.pop().name().equals(tagName))
                             return false;
                     }
                     else
@@ -65,18 +70,26 @@ public final class DocumentValidator
                             return false;
                         tags.add(new HTMLTag(tagName, TagType.BEGIN));
                     }
+                    tagIdentified = false;
+                    selfEnclosing = false;
+                    closing = false;
+                    tag = false;
+                    tagName = "";
+                    nextTag = "";
                     break;
                 default:
-                    if (tag && !tagIdentified && c != ' ')
-                        tagName += c;
-                    else if (c == ' ')
+                    if (!tag)
+                        break;
+                    if (c == ' ')
                         tagIdentified = true;
+                    else if (tag && !tagIdentified && c != ' ')
+                        tagName += c;
                     nextTag += c;
                     break;
                 }
             }
         }
-        return true;
+        return tags.isEmpty();
     }
     enum TagType
     {
