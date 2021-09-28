@@ -6,8 +6,9 @@ import java.util.regex.Pattern;
 public final class DocumentValidator
 {
     // Use this regex: ^<([A-z\-]*) *(([^=,]*) *= *("[^"]*"|[^"]*))* *>$
-    static final Pattern START_TAG = Pattern.compile("^<([A-z0-9\"\'= \\-\n\t]*?)>$");
-    static final Pattern SELF_ENCLOSE_TAG = Pattern.compile("^<\\!?([A-z0-9\"\'= \\-\\n\\t]*?)/?>$");
+    static final Pattern START_TAG = Pattern.compile("^<([A-z\\-]*) *(([^=,]*) *= *(\"[^\"]*\"|[^\"]*))* *>$");
+    static final Pattern SELF_ENCLOSE_TAG = Pattern.compile("^<([A-z\\-]*) *(([^=,]*) *= *(\"[^\"]*\"|[^\"]*))* */?>$");
+    static final Pattern DOCTYPE_TAG = Pattern.compile("^<!(.*)>$");
     static final Pattern END_TAG = Pattern.compile("^<\\/([A-z0-9 \\-\n\t]*?)>$");
     static final Pattern VALID_CHARS_REGEX = Pattern.compile("[A-z]|\\-|\\!|\\\"|\\'");
     
@@ -18,6 +19,7 @@ public final class DocumentValidator
         var tagName = "";
         boolean tagIdentified = false;
         boolean selfEnclosing = false;
+        boolean isDoctype = false;
         boolean closing = false;
         boolean tag = false;
         while (documentStream.hasNext())
@@ -42,7 +44,7 @@ public final class DocumentValidator
                     break;
                 case '!':
                     if (!tagIdentified)
-                        selfEnclosing = true;
+                        isDoctype = true;
                     else
                         return false;
                     nextTag += c;
@@ -53,6 +55,13 @@ public final class DocumentValidator
                     {
                         var regexResult = false;
                         regexResult = SELF_ENCLOSE_TAG.asPredicate().test(nextTag);
+                        if (!regexResult)
+                            return false;
+                    }
+                    else if (isDoctype)
+                    {
+                        var regexResult = false;
+                        regexResult = DOCTYPE_TAG.asPredicate().test(nextTag);
                         if (!regexResult)
                             return false;
                     }
@@ -75,6 +84,7 @@ public final class DocumentValidator
                     selfEnclosing = false;
                     closing = false;
                     tag = false;
+                    isDoctype = false;
                     tagName = "";
                     nextTag = "";
                     break;
