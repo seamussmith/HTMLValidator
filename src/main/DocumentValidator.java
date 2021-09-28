@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 
 public final class DocumentValidator
 {
+    // Use this regex: ^<([A-z\-]*) *(([^=,]*) *= *("[^"]*"|[^"]*))* *>$
     static final Pattern START_TAG = Pattern.compile("^<([A-z0-9\"\'= \\-\n\t]*?)>$");
     static final Pattern SELF_ENCLOSE_TAG = Pattern.compile("^<\\!?([A-z0-9\"\'= \\-\\n\\t]*?)/?>$");
     static final Pattern END_TAG = Pattern.compile("^<\\/([A-z0-9 \\-\n\t]*?)>$");
